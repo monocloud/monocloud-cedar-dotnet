@@ -59,12 +59,24 @@ public sealed class PolicySet
     var policies = root.GetProperty("staticPolicies")
       .EnumerateArray()
       .Select(x => new Policy(x.GetProperty("text").GetString()!, x.GetProperty("id").GetString()))
+#if NETSTANDARD2_0
+      .ToList();
+#else
       .ToHashSet();
+#endif
     var templates = root.GetProperty("templates")
       .EnumerateArray()
       .Select(x => new Policy(x.GetProperty("text").GetString()!, x.GetProperty("id").GetString()))
+#if NETSTANDARD2_0
+      .ToList();
+#else
       .ToHashSet();
+#endif
 
+#if NETSTANDARD2_0
+    return new PolicySet(new HashSet<Policy>(policies), new HashSet<Policy>(templates));
+#else
     return new PolicySet(policies, templates);
+#endif
   }
 }

@@ -46,6 +46,15 @@ public sealed class CedarList : Value, IList<Value>
 
   public override int GetHashCode()
   {
+#if NETSTANDARD2_0
+    var hash = 17;
+    foreach (var item in list)
+    {
+      hash = hash * 31 + item.GetHashCode();
+    }
+
+    return hash;
+#else
     var hash = new HashCode();
     foreach (var item in list)
     {
@@ -53,5 +62,6 @@ public sealed class CedarList : Value, IList<Value>
     }
 
     return hash.ToHashCode();
+#endif
   }
 }

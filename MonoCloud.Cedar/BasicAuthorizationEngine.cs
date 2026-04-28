@@ -8,10 +8,18 @@ public sealed class BasicAuthorizationEngine : AuthorizationEngine
   private const string ValidateWithLevelOperation = "ValidateWithLevelOperation";
   private const string ValidateEntitiesOperation = "ValidateEntities";
 
+#if NETSTANDARD2_0
+  public static string GetCedarLangVersion() => "4.0";
+#endif
+
   static BasicAuthorizationEngine()
   {
     var nativeVersion = CedarJson.NativeString(CedarFfi.CedarVersion);
+#if NETSTANDARD2_0
+    var langVersion = GetCedarLangVersion();
+#else
     var langVersion = AuthorizationEngine.GetCedarLangVersion();
+#endif
     if (nativeVersion != langVersion)
     {
       throw new TypeInitializationException(
@@ -100,7 +108,11 @@ public sealed class BasicAuthorizationEngine : AuthorizationEngine
   private sealed class AuthorizationEnvelope : AuthorizationRequest
   {
     public AuthorizationEnvelope(AuthorizationRequest request, PolicySet policies, ISet<Entity> entities)
+#if NETSTANDARD2_0
+      : base(request.PrincipalEUID, request.ActionEUID, request.ResourceEUID, request.Context is null ? null : request.Context.ToDictionary(x => x.Key, x => x.Value), request.Schema, request.EnableRequestValidation)
+#else
       : base(request.PrincipalEUID, request.ActionEUID, request.ResourceEUID, request.Context?.ToDictionary(), request.Schema, request.EnableRequestValidation)
+#endif
     {
       Policies = policies;
       Entities = entities;
@@ -116,7 +128,11 @@ public sealed class BasicAuthorizationEngine : AuthorizationEngine
   private sealed class PartialAuthorizationEnvelope : PartialAuthorizationRequest
   {
     public PartialAuthorizationEnvelope(PartialAuthorizationRequest request, PolicySet policies, ISet<Entity> entities)
+#if NETSTANDARD2_0
+      : base(request.Principal, request.Action, request.Resource, request.Context is null ? null : request.Context.ToDictionary(x => x.Key, x => x.Value), request.Schema, request.EnableRequestValidation)
+#else
       : base(request.Principal, request.Action, request.Resource, request.Context?.ToDictionary(), request.Schema, request.EnableRequestValidation)
+#endif
     {
       Policies = policies;
       Entities = entities;

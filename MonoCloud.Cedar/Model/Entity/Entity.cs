@@ -30,18 +30,28 @@ public sealed class Entity
   public IReadOnlyDictionary<string, Value.Value> Attrs { get; }
 
   [JsonPropertyName("parents")]
-  public IReadOnlySet<EntityUID> ParentsEUIDs { get; }
+  public IReadOnlyCollection<EntityUID> ParentsEUIDs { get; }
 
   [JsonPropertyName("tags")]
   public IReadOnlyDictionary<string, Value.Value> Tags { get; }
 
-  public Value.Value? GetAttr(string attribute) => Attrs.GetValueOrDefault(attribute);
+  public Value.Value? GetAttr(string attribute) =>
+#if NETSTANDARD2_0
+    Attrs.TryGetValue(attribute, out var value) ? value : null;
+#else
+    Attrs.GetValueOrDefault(attribute);
+#endif
 
   public EntityUID GetEUID() => EUID;
 
   public ISet<EntityUID> GetParents() => new HashSet<EntityUID>(ParentsEUIDs);
 
-  public IDictionary<string, Value.Value> GetTags() => new Dictionary<string, Value.Value>(Tags);
+  public IDictionary<string, Value.Value> GetTags() =>
+#if NETSTANDARD2_0
+    Tags.ToDictionary(x => x.Key, x => x.Value);
+#else
+    new Dictionary<string, Value.Value>(Tags);
+#endif
 
   public static Entity Parse(string jsonString) => CedarJson.Deserialize<Entity>(jsonString);
 

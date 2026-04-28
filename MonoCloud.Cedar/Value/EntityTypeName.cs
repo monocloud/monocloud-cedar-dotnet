@@ -26,7 +26,10 @@ public sealed class EntityTypeName
 
   public static EntityTypeName? Parse(string src)
   {
-    ArgumentNullException.ThrowIfNull(src);
+    if (src is null)
+    {
+      throw new ArgumentNullException(nameof(src));
+    }
     var parsed = CedarJson.NativeAnswer(() => CedarFfi.CedarParseEntityTypeName(src));
     return parsed == "null" ? null : FromValidatedSource(parsed);
   }
@@ -38,6 +41,15 @@ public sealed class EntityTypeName
 
   public override int GetHashCode()
   {
+#if NETSTANDARD2_0
+    var hash = 17;
+    foreach (var part in @namespace)
+    {
+      hash = hash * 31 + part.GetHashCode();
+    }
+
+    return hash * 31 + BaseName.GetHashCode();
+#else
     var hash = new HashCode();
     foreach (var part in @namespace)
     {
@@ -46,18 +58,28 @@ public sealed class EntityTypeName
 
     hash.Add(BaseName);
     return hash.ToHashCode();
+#endif
   }
 
   internal string ToSource() => @namespace.Count == 0 ? BaseName : $"{string.Join("::", @namespace)}::{BaseName}";
 
   internal static EntityTypeName FromValidatedSource(string src)
   {
-    var parts = src.Split("::", StringSplitOptions.RemoveEmptyEntries);
+    var parts =
+#if NETSTANDARD2_0
+      src.Split(new[] { "::" }, StringSplitOptions.RemoveEmptyEntries);
+#else
+      src.Split("::", StringSplitOptions.RemoveEmptyEntries);
+#endif
     if (parts.Length == 0)
     {
       throw new ArgumentException("Entity type name cannot be empty.", nameof(src));
     }
 
+#if NETSTANDARD2_0
+    return new EntityTypeName(parts.Take(parts.Length - 1).ToArray(), parts[parts.Length - 1]);
+#else
     return new EntityTypeName(parts[..^1], parts[^1]);
+#endif
   }
 }

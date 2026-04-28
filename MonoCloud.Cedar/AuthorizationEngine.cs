@@ -18,5 +18,7 @@ public interface AuthorizationEngine
 
   void ValidateEntities(EntityValidationRequest request);
 
+#if !NETSTANDARD2_0
   static string GetCedarLangVersion() => "4.0";
+#endif
 }

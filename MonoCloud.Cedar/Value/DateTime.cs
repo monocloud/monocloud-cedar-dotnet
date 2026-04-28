@@ -40,9 +40,9 @@ public sealed partial class DateTime : Value
       return false;
     }
 
-    var year = int.Parse(match.Groups["year"].ValueSpan);
-    var month = int.Parse(match.Groups["month"].ValueSpan);
-    var day = int.Parse(match.Groups["day"].ValueSpan);
+    var year = ParseInt(match.Groups["year"]);
+    var month = ParseInt(match.Groups["month"]);
+    var day = ParseInt(match.Groups["day"]);
     if (month < 1 || month > 12 || day < 1 || day > DaysInMonth(year, month))
     {
       return false;
@@ -56,9 +56,9 @@ public sealed partial class DateTime : Value
 
     if (match.Groups["hour"].Success)
     {
-      hour = int.Parse(match.Groups["hour"].ValueSpan);
-      minute = int.Parse(match.Groups["minute"].ValueSpan);
-      second = int.Parse(match.Groups["second"].ValueSpan);
+      hour = ParseInt(match.Groups["hour"]);
+      minute = ParseInt(match.Groups["minute"]);
+      second = ParseInt(match.Groups["second"]);
       if (hour > 23 || minute > 59 || second > 59)
       {
         return false;
@@ -66,13 +66,13 @@ public sealed partial class DateTime : Value
 
       if (match.Groups["ms"].Success)
       {
-        millisecond = int.Parse(match.Groups["ms"].ValueSpan);
+        millisecond = ParseInt(match.Groups["ms"]);
       }
 
       if (match.Groups["sign"].Success)
       {
-        var offsetHours = int.Parse(match.Groups["offh"].ValueSpan);
-        var offsetMinutes = int.Parse(match.Groups["offm"].ValueSpan);
+        var offsetHours = ParseInt(match.Groups["offh"]);
+        var offsetMinutes = ParseInt(match.Groups["offm"]);
         if (offsetHours > 23 || offsetMinutes > 59)
         {
           return false;
@@ -118,6 +118,20 @@ public sealed partial class DateTime : Value
     return era * 146097L + doe - 719468L;
   }
 
+  private static int ParseInt(Group group) =>
+#if NETSTANDARD2_0
+    int.Parse(group.Value);
+#else
+    int.Parse(group.ValueSpan);
+#endif
+
+#if NETSTANDARD2_0
+  private static readonly Regex DateTimeRegexInstance =
+    new(@"^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})(?:T(?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})(?:\.(?<ms>\d{3}))?(?:Z|(?<sign>[+-])(?<offh>\d{2})(?<offm>\d{2})))?$", RegexOptions.Compiled);
+
+  private static Regex DateTimeRegex() => DateTimeRegexInstance;
+#else
   [GeneratedRegex(@"^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})(?:T(?<hour>\d{2}):(?<minute>\d{2}):(?<second>\d{2})(?:\.(?<ms>\d{3}))?(?:Z|(?<sign>[+-])(?<offh>\d{2})(?<offm>\d{2})))?$")]
   private static partial Regex DateTimeRegex();
+#endif
 }

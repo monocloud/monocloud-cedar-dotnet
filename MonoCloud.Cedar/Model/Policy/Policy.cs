@@ -53,7 +53,11 @@ public sealed class Policy
   public string? GetAnnotation(string key)
   {
     EnsureAnnotationsLoaded();
+#if NETSTANDARD2_0
+    return annotations!.TryGetValue(key, out var value) ? value : null;
+#else
     return annotations!.GetValueOrDefault(key);
+#endif
   }
 
   public override string ToString() => $"// Policy ID: {PolicyID}\n{PolicySrc}";

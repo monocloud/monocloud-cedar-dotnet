@@ -53,6 +53,16 @@ public sealed class CedarMap : Value, IDictionary<string, Value>
 
   public override int GetHashCode()
   {
+#if NETSTANDARD2_0
+    var hash = 17;
+    foreach (var item in map.OrderBy(x => x.Key, StringComparer.Ordinal))
+    {
+      hash = hash * 31 + item.Key.GetHashCode();
+      hash = hash * 31 + item.Value.GetHashCode();
+    }
+
+    return hash;
+#else
     var hash = new HashCode();
     foreach (var item in map.OrderBy(x => x.Key, StringComparer.Ordinal))
     {
@@ -61,5 +71,6 @@ public sealed class CedarMap : Value, IDictionary<string, Value>
     }
 
     return hash.ToHashCode();
+#endif
   }
 }

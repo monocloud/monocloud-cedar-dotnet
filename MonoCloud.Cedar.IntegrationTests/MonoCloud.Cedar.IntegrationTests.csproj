@@ -7,7 +7,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-<ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk"/>
     <PackageReference Include="xunit"/>
     <PackageReference Include="xunit.runner.visualstudio">
@@ -21,11 +21,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Using Include="Xunit" />
+    <Using Include="Xunit"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../MonoCloud.Cedar/MonoCloud.Cedar.csproj" />
+    <ProjectReference Include="../MonoCloud.Cedar/MonoCloud.Cedar.csproj"/>
   </ItemGroup>
 
   <PropertyGroup>
@@ -37,16 +37,16 @@
   </PropertyGroup>
 
   <Target Name="DownloadCedarIntegrationTests" BeforeTargets="BeforeBuild" Condition="!Exists('$(CedarIntegrationTestsExtractDir)/tests')">
-    <MakeDir Directories="$(CedarIntegrationTestsRoot)" />
+    <MakeDir Directories="$(CedarIntegrationTestsRoot)"/>
     <DownloadFile SourceUrl="https://codeload.github.com/cedar-policy/cedar-integration-tests/zip/main"
                   DestinationFolder="$(CedarIntegrationTestsRoot)"
                   DestinationFileName="cedar-integration-tests-main.zip"
-                  SkipUnchangedFiles="true" />
-    <Unzip SourceFiles="$(CedarIntegrationTestsZip)" DestinationFolder="$(CedarIntegrationTestsRoot)" OverwriteReadOnlyFiles="true" />
+                  SkipUnchangedFiles="true"/>
+    <Unzip SourceFiles="$(CedarIntegrationTestsZip)" DestinationFolder="$(CedarIntegrationTestsRoot)" OverwriteReadOnlyFiles="true"/>
   </Target>
 
   <Target Name="ExtractCedarIntegrationTestsCorpus" BeforeTargets="BeforeBuild" DependsOnTargets="DownloadCedarIntegrationTests" Condition="!Exists('$(CedarIntegrationTestsCorpusDir)') AND Exists('$(CedarIntegrationTestsCorpusTar)')">
-    <Exec Command="tar -xzf &quot;$(CedarIntegrationTestsCorpusTar)&quot; -C &quot;$(CedarIntegrationTestsExtractDir)&quot;" />
+    <Exec Command="tar -xzf &quot;$(CedarIntegrationTestsCorpusTar)&quot; -C &quot;$(CedarIntegrationTestsExtractDir)&quot;"/>
   </Target>
 
 </Project>

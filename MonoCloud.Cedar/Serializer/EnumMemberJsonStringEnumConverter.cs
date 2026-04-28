@@ -34,11 +34,11 @@ internal sealed class EnumMemberJsonStringEnumConverter : JsonConverterFactory
     private static Dictionary<string, TEnum> BuildFromWire()
     {
       var result = new Dictionary<string, TEnum>(StringComparer.OrdinalIgnoreCase);
-      foreach (var name in Enum.GetNames<TEnum>())
+      foreach (var name in Enum.GetNames(typeof(TEnum)))
       {
         var member = typeof(TEnum).GetMember(name).Single();
         var wire = member.GetCustomAttribute<EnumMemberAttribute>()?.Value ?? JsonNamingPolicy.CamelCase.ConvertName(name);
-        result[wire] = Enum.Parse<TEnum>(name);
+        result[wire] = (TEnum)Enum.Parse(typeof(TEnum), name);
       }
 
       return result;

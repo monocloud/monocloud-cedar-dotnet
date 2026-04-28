@@ -41,7 +41,18 @@ public sealed partial class Duration : Value, IComparable<Duration>
       throw new ArgumentException($"Input string is not a supported Duration format: {text}", nameof(text), ex);
     }
 
-    if (!match.Groups.Values.Skip(1).Any(x => x.Success && x.Name != "sign"))
+#if NETSTANDARD2_0
+    var hasValue =
+      match.Groups["days"].Success ||
+      match.Groups["hours"].Success ||
+      match.Groups["minutes"].Success ||
+      match.Groups["seconds"].Success ||
+      match.Groups["milliseconds"].Success;
+#else
+    var hasValue = match.Groups.Values.Skip(1).Any(x => x.Success && x.Name != "sign");
+#endif
+
+    if (!hasValue)
     {
       throw new ArgumentException($"Input string is not a supported Duration format: {text}", nameof(text));
     }
@@ -52,8 +63,15 @@ public sealed partial class Duration : Value, IComparable<Duration>
   private static long Read(Match match, string name) =>
     match.Groups[name].Success ? long.Parse(match.Groups[name].Value) : 0;
 
+#if NETSTANDARD2_0
+  private static readonly Regex DurationRegexInstance =
+    new("^(?<sign>-?)(?:(?:(?<days>\\d+)d)?(?:(?<hours>\\d+)h)?(?:(?<minutes>\\d+)m(?!s))?(?:(?<seconds>\\d+)s)?(?:(?<milliseconds>\\d+)ms)?)$", RegexOptions.Compiled);
+
+  private static Regex DurationRegex() => DurationRegexInstance;
+#else
   [GeneratedRegex("^(?<sign>-?)(?:(?:(?<days>\\d+)d)?(?:(?<hours>\\d+)h)?(?:(?<minutes>\\d+)m(?!s))?(?:(?<seconds>\\d+)s)?(?:(?<milliseconds>\\d+)ms)?)$")]
   private static partial Regex DurationRegex();
+#endif
 
   public override bool Equals(object? obj) => obj is Duration other && TotalMilliseconds == other.TotalMilliseconds;
 

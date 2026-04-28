@@ -19,5 +19,10 @@ public sealed class Offset : Value
   public override bool Equals(object? obj) =>
     obj is Offset other && DateTime.Equals(other.DateTime) && OffsetDuration.Equals(other.OffsetDuration);
 
-  public override int GetHashCode() => HashCode.Combine(DateTime, OffsetDuration);
+  public override int GetHashCode() =>
+#if NETSTANDARD2_0
+    DateTime.GetHashCode() * 31 + OffsetDuration.GetHashCode();
+#else
+    HashCode.Combine(DateTime, OffsetDuration);
+#endif
 }

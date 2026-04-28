@@ -31,7 +31,11 @@ public static class CedarJson
     var ptr = call();
     try
     {
+#if NETSTANDARD2_0
+      return PtrToStringUtf8(ptr);
+#else
       return Marshal.PtrToStringUTF8(ptr) ?? string.Empty;
+#endif
     }
     finally
     {
@@ -56,4 +60,29 @@ public static class CedarJson
     public string? Result { get; set; }
     public IReadOnlyList<string>? Errors { get; set; }
   }
+
+#if NETSTANDARD2_0
+  private static string PtrToStringUtf8(IntPtr ptr)
+  {
+    if (ptr == IntPtr.Zero)
+    {
+      return string.Empty;
+    }
+
+    var length = 0;
+    while (Marshal.ReadByte(ptr, length) != 0)
+    {
+      length++;
+    }
+
+    if (length == 0)
+    {
+      return string.Empty;
+    }
+
+    var bytes = new byte[length];
+    Marshal.Copy(ptr, bytes, 0, length);
+    return System.Text.Encoding.UTF8.GetString(bytes);
+  }
+#endif
 }

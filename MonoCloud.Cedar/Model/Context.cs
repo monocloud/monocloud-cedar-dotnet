@@ -33,7 +33,12 @@ public sealed class Context
     }
   }
 
-  public Value.Value? Get(string key) => context.GetValueOrDefault(key);
+  public Value.Value? Get(string key) =>
+#if NETSTANDARD2_0
+    context.TryGetValue(key, out var value) ? value : null;
+#else
+    context.GetValueOrDefault(key);
+#endif
 
   public override string ToString() => $"{{{string.Join(", ", context.Select(x => $"{x.Key}={x.Value}"))}}}";
 }

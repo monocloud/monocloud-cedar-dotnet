@@ -23,7 +23,10 @@ public sealed class Schema
 
   public static Schema Parse(JsonOrCedar type, string str)
   {
-    ArgumentNullException.ThrowIfNull(str);
+    if (str is null)
+    {
+      throw new ArgumentNullException(nameof(str));
+    }
     if (type == JsonOrCedar.Json)
     {
       CedarJson.NativeAnswer(() => CedarFfi.CedarParseJsonSchema(str));

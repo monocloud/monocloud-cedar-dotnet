@@ -1,5 +1,11 @@
 # @monocloud/monocloud-cedar-dotnet
 
+## 0.0.3
+
+### Patch Changes
+
+- 564b6ea: Added Support for .NET 8 & .NET 9
+
 ## 0.0.2
 
 ### Patch Changes

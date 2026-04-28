@@ -1,21 +1,16 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>MonoCloud.Cedar</RootNamespace>
-    <AssemblyName>MonoCloud.Cedar</AssemblyName>
+    <TargetFrameworks>net10.0;net9.0;net8.0</TargetFrameworks>
     <PackageId>MonoCloud.Cedar</PackageId>
     <Product>MonoCloud.Cedar</Product>
+    <AssemblyName>MonoCloud.Cedar</AssemblyName>
     <Title>MonoCloud Cedar .NET Library</Title>
     <Description>.NET bindings for the Cedar policy language, with native runtime libraries bundled for win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, and osx-arm64.</Description>
     <PackageReadmeFile>README.nuget.md</PackageReadmeFile>
     <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591;CS8618;CS8073</NoWarn>
-    <DebugType>embedded</DebugType>
-    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <MonoCloudCedarRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</MonoCloudCedarRuntimeIdentifier>
     <MonoCloudCedarRuntimeIdentifier Condition="'$(MonoCloudCedarRuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</MonoCloudCedarRuntimeIdentifier>
   </PropertyGroup>

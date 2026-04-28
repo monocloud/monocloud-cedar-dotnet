@@ -8,7 +8,7 @@ pnpm changeset version
 PACKAGE_VERSION=$(jq -r '.version' package.json)
 echo "Syncing Directory.Build.props to $PACKAGE_VERSION"
 
-sed -i "s|<Version>.*</Version>|<Version>$PACKAGE_VERSION</Version>|g" Directory.Build.props
+sed -i "s|<Version>.*</Version>|<Version>$PACKAGE_VERSION</Version>|g" Directory.Packages.props
 
 # 3. Explicitly stage the file so the Action commits it
-git add Directory.Build.props
+git add Directory.Packages.props

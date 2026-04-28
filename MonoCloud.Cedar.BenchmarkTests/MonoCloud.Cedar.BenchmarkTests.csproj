@@ -8,15 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BenchmarkDotNet" />
+    <PackageReference Include="BenchmarkDotNet"/>
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../MonoCloud.Cedar/MonoCloud.Cedar.csproj" />
+    <ProjectReference Include="../MonoCloud.Cedar/MonoCloud.Cedar.csproj"/>
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Resources/**/*" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Resources/**/*" CopyToOutputDirectory="PreserveNewest"/>
   </ItemGroup>
 
 </Project>

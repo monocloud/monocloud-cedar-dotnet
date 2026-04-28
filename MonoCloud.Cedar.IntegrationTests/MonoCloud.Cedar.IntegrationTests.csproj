@@ -1,0 +1,52 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+<ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk"/>
+    <PackageReference Include="xunit"/>
+    <PackageReference Include="xunit.runner.visualstudio">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../MonoCloud.Cedar/MonoCloud.Cedar.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <CedarIntegrationTestsRoot>$(MSBuildProjectDirectory)/IntegrationTests</CedarIntegrationTestsRoot>
+    <CedarIntegrationTestsZip>$(CedarIntegrationTestsRoot)/cedar-integration-tests-main.zip</CedarIntegrationTestsZip>
+    <CedarIntegrationTestsExtractDir>$(CedarIntegrationTestsRoot)/cedar-integration-tests-main</CedarIntegrationTestsExtractDir>
+    <CedarIntegrationTestsCorpusDir>$(CedarIntegrationTestsExtractDir)/corpus-tests</CedarIntegrationTestsCorpusDir>
+    <CedarIntegrationTestsCorpusTar>$(CedarIntegrationTestsExtractDir)/corpus-tests.tar.gz</CedarIntegrationTestsCorpusTar>
+  </PropertyGroup>
+
+  <Target Name="DownloadCedarIntegrationTests" BeforeTargets="BeforeBuild" Condition="!Exists('$(CedarIntegrationTestsExtractDir)/tests')">
+    <MakeDir Directories="$(CedarIntegrationTestsRoot)" />
+    <DownloadFile SourceUrl="https://codeload.github.com/cedar-policy/cedar-integration-tests/zip/main"
+                  DestinationFolder="$(CedarIntegrationTestsRoot)"
+                  DestinationFileName="cedar-integration-tests-main.zip"
+                  SkipUnchangedFiles="true" />
+    <Unzip SourceFiles="$(CedarIntegrationTestsZip)" DestinationFolder="$(CedarIntegrationTestsRoot)" OverwriteReadOnlyFiles="true" />
+  </Target>
+
+  <Target Name="ExtractCedarIntegrationTestsCorpus" BeforeTargets="BeforeBuild" DependsOnTargets="DownloadCedarIntegrationTests" Condition="!Exists('$(CedarIntegrationTestsCorpusDir)') AND Exists('$(CedarIntegrationTestsCorpusTar)')">
+    <Exec Command="tar -xzf &quot;$(CedarIntegrationTestsCorpusTar)&quot; -C &quot;$(CedarIntegrationTestsExtractDir)&quot;" />
+  </Target>
+
+</Project>

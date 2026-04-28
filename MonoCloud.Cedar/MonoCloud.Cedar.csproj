@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>MonoCloud.Cedar</RootNamespace>
+    <AssemblyName>MonoCloud.Cedar</AssemblyName>
+    <PackageId>MonoCloud.Cedar</PackageId>
+    <Product>MonoCloud.Cedar</Product>
+    <Title>MonoCloud Cedar .NET Library</Title>
+    <Description>.NET bindings for the Cedar policy language, with native runtime libraries bundled for win-x64, win-arm64, linux-x64, linux-arm64, osx-x64, and osx-arm64.</Description>
+    <PackageReadmeFile>README.nuget.md</PackageReadmeFile>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591;CS8618;CS8073</NoWarn>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <DebugType>portable</DebugType>
+    <MonoCloudCedarRuntimeIdentifier Condition="'$(RuntimeIdentifier)' != ''">$(RuntimeIdentifier)</MonoCloudCedarRuntimeIdentifier>
+    <MonoCloudCedarRuntimeIdentifier Condition="'$(MonoCloudCedarRuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</MonoCloudCedarRuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="all" />
+    <PackageReference Include="DotNet.ReproducibleBuilds">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.nuget.md" Pack="true" PackagePath="\" />
+    <None Include="../LICENSE" Pack="true" PackagePath="\" />
+    <None Include="../MonoCloud.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Always pack the native libraries for all platforms -->
+  <ItemGroup>
+    <Content Include="Runtimes\**" Pack="true" PackagePath="\runtimes"/>
+  </ItemGroup>
+
+  <!-- OS-specific copying logic -->
+  <ItemGroup>
+    <None Include="Runtimes\win-x64\native\cedar_dotnet_ffi.dll"
+          Condition="'$(MonoCloudCedarRuntimeIdentifier)' == 'win-x64' AND Exists('Runtimes\win-x64\native\cedar_dotnet_ffi.dll')"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="cedar_dotnet_ffi.dll"/>
+
+    <None Include="Runtimes\win-arm64\native\cedar_dotnet_ffi.dll"
+          Condition="'$(MonoCloudCedarRuntimeIdentifier)' == 'win-arm64' AND Exists('Runtimes\win-arm64\native\cedar_dotnet_ffi.dll')"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="cedar_dotnet_ffi.dll"/>
+
+    <None Include="Runtimes\linux-x64\native\libcedar_dotnet_ffi.so"
+          Condition="'$(MonoCloudCedarRuntimeIdentifier)' == 'linux-x64' AND Exists('Runtimes\linux-x64\native\libcedar_dotnet_ffi.so')"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="libcedar_dotnet_ffi.so"/>
+
+    <None Include="Runtimes\linux-arm64\native\libcedar_dotnet_ffi.so"
+          Condition="'$(MonoCloudCedarRuntimeIdentifier)' == 'linux-arm64' AND Exists('Runtimes\linux-arm64\native\libcedar_dotnet_ffi.so')"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="libcedar_dotnet_ffi.so"/>
+
+    <None Include="Runtimes\osx-x64\native\libcedar_dotnet_ffi.dylib"
+          Condition="'$(MonoCloudCedarRuntimeIdentifier)' == 'osx-x64' AND Exists('Runtimes\osx-x64\native\libcedar_dotnet_ffi.dylib')"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="libcedar_dotnet_ffi.dylib"/>
+
+    <None Include="Runtimes\osx-arm64\native\libcedar_dotnet_ffi.dylib"
+          Condition="'$(MonoCloudCedarRuntimeIdentifier)' == 'osx-arm64' AND Exists('Runtimes\osx-arm64\native\libcedar_dotnet_ffi.dylib')"
+          CopyToOutputDirectory="PreserveNewest"
+          Link="libcedar_dotnet_ffi.dylib"/>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,9 @@
+FROM mstorsjo/llvm-mingw:latest AS llvm-mingw
+
+FROM rust:1-bookworm
+
+COPY --from=llvm-mingw /opt/llvm-mingw /opt/llvm-mingw
+
+ENV PATH="/opt/llvm-mingw/bin:/usr/local/cargo/bin:${PATH}"
+
+RUN rustup target add aarch64-pc-windows-gnullvm

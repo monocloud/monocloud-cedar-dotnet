@@ -1,0 +1,19 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <Version>0.1.0</Version>
+    <AssemblyVersion>0.0.1</AssemblyVersion>
+    <FileVersion>0.0.1</FileVersion>
+    <Company>MonoCloud</Company>
+    <Authors>MonoCloud</Authors>
+    <Copyright>MonoCloud</Copyright>
+    <PackageProjectUrl>https://www.monocloud.com</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/monocloud/monocloud-cedar-dotnet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>monocloud cedar authorization policy</PackageTags>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageIcon>MonoCloud.png</PackageIcon>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+</Project>

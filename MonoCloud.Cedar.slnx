@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="MonoCloud.Cedar/MonoCloud.Cedar.csproj" />
+  <Folder Name="/Tests/">
+    <Project Path="MonoCloud.Cedar.BenchmarkTests/MonoCloud.Cedar.BenchmarkTests.csproj" />
+    <Project Path="MonoCloud.Cedar.IntegrationTests/MonoCloud.Cedar.IntegrationTests.csproj" />
+    <Project Path="MonoCloud.Cedar.UnitTests/MonoCloud.Cedar.UnitTests.csproj" />
+  </Folder>
+</Solution>

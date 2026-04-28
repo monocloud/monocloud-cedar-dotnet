@@ -1,0 +1,188 @@
+name: Snapshot Release on Comment
+
+on:
+  issue_comment:
+    types: [created]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+  DOTNET_NOLOGO: true
+  CARGO_TERM_COLOR: always
+  NuGetDirectory: ${{ github.workspace }}/nuget
+
+jobs:
+  prepare:
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '!snapshot')
+    name: Prepare Snapshot
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    outputs:
+      head_ref: ${{ steps.pr_info.outputs.head_ref }}
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Get PR Info
+        uses: xt0rted/pull-request-comment-branch@v3
+        id: pr_info
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout Repo
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.pr_info.outputs.head_ref }}
+          fetch-depth: 0
+
+      - name: Install PNPM
+        uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Force Patch Snapshot Changeset
+        run: |
+          echo "Clearing existing changesets to force patch snapshot..."
+          find .changeset -name "*.md" ! -name "README.md" -delete
+
+          echo "Creating temporary patch changeset."
+
+          cat <<EOF > .changeset/temp-snapshot.md
+          ---
+          '@monocloud/monocloud-cedar-dotnet': patch
+          ---
+
+          Snapshot release.
+          EOF
+
+      - name: Create Snapshot Version
+        run: pnpm changeset version --snapshot canary
+
+      - name: Capture version
+        id: version
+        run: echo "version=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+
+  native:
+    name: Native (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - rid: linux-x64
+            os: ubuntu-latest
+          - rid: linux-arm64
+            os: ubuntu-latest
+            apt-packages: gcc-aarch64-linux-gnu libc6-dev-arm64-cross
+          - rid: osx-arm64
+            os: macos-14
+          - rid: osx-x64
+            os: macos-13
+          - rid: win-x64
+            os: windows-latest
+            windows-target: x86_64-pc-windows-msvc
+          - rid: win-arm64
+            os: ubuntu-latest
+            use-docker: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.prepare.outputs.head_ref }}
+
+      - name: Install cross-compile apt packages
+        if: matrix.apt-packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ${{ matrix.apt-packages }}
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: ${{ ! matrix.use-docker }}
+
+      - uses: Swatinem/rust-cache@v2
+        if: ${{ ! matrix.use-docker }}
+        with:
+          workspaces: MonoCloud.Cedar.FFI
+
+      - name: Build native runtime
+        shell: bash
+        env:
+          WINDOWS_TARGET: ${{ matrix.windows-target }}
+        run: |
+          set -euo pipefail
+          args=(--target "${{ matrix.rid }}")
+          if [[ "${{ matrix.use-docker }}" == "true" ]]; then
+            args+=(--use-docker)
+          else
+            args+=(--install-targets)
+          fi
+          ./scripts/build-runtimes.sh "${args[@]}"
+
+      - name: Upload native artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.rid }}
+          path: MonoCloud.Cedar/Runtimes/${{ matrix.rid }}/
+          if-no-files-found: error
+
+  publish:
+    name: Pack & Publish Snapshot
+    runs-on: ubuntu-latest
+    needs: [prepare, native]
+
+    permissions:
+      contents: read
+      packages: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ needs.prepare.outputs.head_ref }}
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: MonoCloud.Cedar/Runtimes
+
+      - name: Pack
+        run: |
+          PACKAGE_VERSION="${{ needs.prepare.outputs.version }}"
+          echo "Packing version: $PACKAGE_VERSION"
+          dotnet pack MonoCloud.Cedar --configuration Release --output ${{ env.NuGetDirectory }} /p:Version=$PACKAGE_VERSION
+
+      - name: Push to GitHub Packages
+        run: |
+          dotnet nuget push "${{ env.NuGetDirectory }}/*.nupkg" \
+            --api-key ${{ secrets.GITHUB_TOKEN }} \
+            --source https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json \
+            --skip-duplicate
+
+      - name: Comment on PR with version
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const version = '${{ needs.prepare.outputs.version }}';
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `🚀 Private Snapshot published!\nVersion: \`${version}\``
+            })

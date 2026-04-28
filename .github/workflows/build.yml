@@ -1,0 +1,232 @@
+name: Build & Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  checks: write
+  actions: read
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: 1
+  DOTNET_CLI_TELEMETRY_OPTOUT: 1
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build Projects
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: MonoCloud.Cedar.FFI
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x.x
+
+      - name: Build native runtime (linux-x64)
+        run: ./scripts/build-runtimes.sh --target linux-x64 --install-targets
+
+      - name: Restore Packages
+        run: dotnet restore --nologo
+
+      - name: Build
+        run: dotnet build --no-restore --nologo --configuration Release
+
+      - name: Cache Build
+        uses: actions/cache/save@v4
+        with:
+          path: .
+          key: build-${{ github.run_id }}-${{ github.run_attempt }}
+
+  lint-dotnet:
+    name: Lint DotNet
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x.x
+
+      - name: Install Tool
+        run: dotnet tool restore || true
+
+      - name: Lint DotNet
+        id: lint_dotnet
+        run: |
+          dotnet format --verify-no-changes
+
+  lint-rust:
+    name: Lint Rust
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: MonoCloud.Cedar.FFI
+
+      - name: Lint Rust (fmt)
+        working-directory: MonoCloud.Cedar.FFI
+        run: cargo fmt --all -- --check
+
+      - name: Lint Rust (clippy)
+        working-directory: MonoCloud.Cedar.FFI
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test-unit:
+    name: Cedar SDK Unit Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x.x
+
+      - name: Load Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .
+          key: build-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Test
+        run: dotnet test MonoCloud.Cedar.UnitTests/MonoCloud.Cedar.UnitTests.csproj --nologo --configuration Release --results-directory ./TestResults --logger "trx;LogFileName=MonoCloud.Cedar.UnitTests.trx"
+
+      - name: Upload test results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonoCloud.Cedar.UnitTests
+          path: "**/*.trx"
+          overwrite: true
+
+      - name: Report Unit Test Results
+        if: success() || failure()
+        uses: dorny/test-reporter@v1
+        with:
+          name: "MonoCloud Cedar Unit Tests"
+          path: "**/*.trx"
+          reporter: dotnet-trx
+          fail-on-error: false
+
+  test-integration:
+    name: Cedar SDK Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET Core SDK
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.x.x
+
+      - name: Load Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .
+          key: build-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Test
+        run: dotnet test MonoCloud.Cedar.IntegrationTests/MonoCloud.Cedar.IntegrationTests.csproj --nologo --configuration Release --results-directory ./TestResults --logger "trx;LogFileName=MonoCloud.Cedar.IntegrationTests.trx"
+
+      - name: Upload test results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonoCloud.Cedar.IntegrationTests
+          path: "**/*.trx"
+          overwrite: true
+
+      - name: Report Integration Test Results
+        if: success() || failure()
+        uses: dorny/test-reporter@v1
+        with:
+          name: "MonoCloud Cedar Integration Tests"
+          path: "**/*.trx"
+          reporter: dotnet-trx
+          fail-on-error: false
+
+  test-rust:
+    name: Cedar Rust Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: MonoCloud.Cedar.FFI
+
+      - name: Install cargo-nextest
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-nextest
+
+      - name: Configure nextest
+        working-directory: MonoCloud.Cedar.FFI
+        run: |
+          mkdir -p .config
+          echo '[profile.default.junit]' > .config/nextest.toml
+          echo 'path = "junit.xml"' >> .config/nextest.toml
+
+      - name: Test Rust
+        working-directory: MonoCloud.Cedar.FFI
+        run: cargo nextest run --all-features
+
+      - name: Upload test results
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MonoCloud.Cedar.RustTests
+          path: "**/junit.xml"
+          overwrite: true
+
+      - name: Report Rust Test Results
+        if: success() || failure()
+        uses: dorny/test-reporter@v1
+        with:
+          name: "MonoCloud Cedar Rust Tests"
+          path: "**/junit.xml"
+          reporter: java-junit
+          fail-on-error: false

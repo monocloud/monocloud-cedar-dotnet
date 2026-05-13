@@ -5,7 +5,6 @@ license = "Apache-2.0"
 description = "C FFI for Cedar (from the cedar-policy crate)."
 edition = "2021"
 
-
 version = "4.0.0"
 
 [dependencies]
@@ -13,7 +12,7 @@ serde = { version = "1.0", features = ["derive", "rc"] }
 serde_json = "1.0"
 thiserror = "2.0"
 itertools = "0.14"
-miette = "7.6.0"
+miette = { version = "7.6.0", default-features = false }
 
 [features]
 default = ["partial-eval"]
@@ -22,9 +21,15 @@ partial-eval = ["cedar-policy/partial-eval"]
 [dev-dependencies]
 cool_asserts = "2.0"
 
-# Dynamic linked library, used by C callers at runtime.
 [lib]
 crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = "z"
+lto = "fat"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
 
 [dependencies.cedar-policy]
 version = "4.0.0"
